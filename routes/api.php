@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,12 +19,12 @@ Route::get('/401', [AuthController::class, 'unauthorized'])->name('login');
 
 Route::post('/auth/login', [AuthController::class, 'login'])->name('auth.login');
 Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout')->middleware('auth:api');
-Route::post('/auth/refresh', [AuthController::class, 'refresh'])->name('auth.refresh')->middleware('auth:api');;
+Route::post('/auth/refresh', [AuthController::class, 'refresh'])->name('auth.refresh')->middleware('auth:api');
 
 Route::post('/user', [AuthController::class, 'create'])->name('auth.create');
-// Route::put('/user', [UserController, 'update'])->name('user.update');
-// Route::post('/user/avatar', [UserController, 'updateAvatar'])->name('user.updateAvatar');
-// Route::post('/user/cover', [UserController, 'updateCover'])->name('user.updateCover');
+Route::put('/user', [UserController::class, 'update'])->name('user.update')->middleware('auth:api');
+Route::post('/user/avatar', [UserController::class, 'updateAvatar'])->name('user.updateAvatar')->middleware('auth:api');
+Route::post('/user/cover', [UserController::class, 'updateCover'])->name('user.updateCover')->middleware('auth:api');;
 
 // Route::get('/feed', [FeedController, 'read'])->name('feed.read');
 // Route::get('/user/feed', [FeedController, 'userFeed'])->name('feed.userFeed');
