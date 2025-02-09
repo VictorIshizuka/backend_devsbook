@@ -13,6 +13,7 @@ class UserController extends Controller
 
     public function update(Request $r)
     {
+        //adicionar if para verificar se Auth::user() existe
         $array = ['error' => ''];
         $name = $r->input('name');
         $email = $r->input('email');
@@ -70,7 +71,7 @@ class UserController extends Controller
 
     public function updateAvatar(Request $r)
     {
-
+        //adicionar if para verificar se Auth::user() existe
         $array = ['error' => ''];
         $allowedTypes = ['image/jpg', 'image/jpeg', 'image/png'];
         $image = $r->file('avatar');
@@ -96,8 +97,26 @@ class UserController extends Controller
         return $array;
     }
 
+    public function read($id = false)
+    {
+        $array = ['error', ''];
+
+        if ($id) {
+            $info = User::find($id);
+            if (!$info) {
+                $array['error'] = "Usuário inexistente!";
+                return $array;
+            }
+        } else {
+            $info = Auth::user();
+        }
+        $array['data'] = $info;
+        return $array;
+    }
+
     public function updateCover(Request $r)
     {
+        //adicionar if para verificar se Auth::user() existe
         $array = ['error' => ''];
         $allowedTypes = ['image/jpg', 'image/jpeg', 'image/png'];
         $image = $r->file('cover');
