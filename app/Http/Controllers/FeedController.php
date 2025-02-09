@@ -119,14 +119,15 @@ class FeedController extends Controller
     {
         $array = ['error' => ''];
         if ($id == false) {
-            $id = Auth::user()->id;
+            $id =$this->loggedUser['id'];
         }
         $page = intval($r->input('page'));
-        $perPage = 1;
+        $perPage = 2;
 
+        //pegar post do usuario por data
         $postList = Post::where('id_user', $id)
             ->orderBy('created_at', 'desc')
-            ->offset($page * $perPage)
+            ->offset(($page- 1) * $perPage)
             ->limit($perPage)->get();
 
 
