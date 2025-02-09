@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Post;
+use App\Models\PostComment;
 use App\Models\PostLike;
 
 class PostController extends Controller
@@ -44,5 +45,30 @@ class PostController extends Controller
             return $array;
         }
         return      $array;
+    }
+
+    public function comment($id, Request $r)
+    {
+        $array = ['error' => ''];
+        $txt = $r->input('txt');
+        $post = Post::find($id);
+        // dd($txt, $this->loggedUser);
+        if ($post) {
+            if ($txt) {
+                $comment = new PostComment();
+                $comment->id_post = $id;
+                $comment->id_user = $this->loggedUser['id'];
+                $comment->body = $txt;
+                $comment->created_at = date('Y-m-d H:i:s');
+                $comment->save();
+            } else {
+                $array['error'] = "Não enviou mensagem!";
+                return $array;
+            }
+        } else {
+            $array['error'] = "Post inexistente!";
+            return $array;
+        }
+        return $array;
     }
 }
