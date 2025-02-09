@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserRelation;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -88,7 +90,7 @@ class UserController extends Controller
                 $destPath = public_path(('/media/avatars'));
                 $img = Image::read($image->path())->cover(200, 200)->save($destPath . '/' . $filename);
 
-                $user = User::find( $this->loggedUser['id']);
+                $user = User::find($this->loggedUser['id']);
                 $user->avatar = $filename;
                 $user->save();
 
@@ -104,23 +106,6 @@ class UserController extends Controller
         return $array;
     }
 
-    public function read($id = false)
-    {
-        $array = ['error', ''];
-
-        if ($id) {
-            $info = User::find($id);
-            if (!$info) {
-                $array['error'] = "Usuário inexistente!";
-                return $array;
-            }
-        } else {
-            $info = Auth::user();
-        }
-        $array['data'] = $info;
-        return $array;
-    }
-
     public function updateCover(Request $r)
     {
         //adicionar if para verificar se Auth::user() existe
@@ -133,7 +118,7 @@ class UserController extends Controller
                 $destPath = public_path(('/media/covers'));
                 $img = Image::read($image->path())->cover(850, 310)->save($destPath . '/' . $filename);
 
-                $user = User::find( $this->loggedUser['id']);
+                $user = User::find($this->loggedUser['id']);
                 $user->cover = $filename;
                 $user->save();
 
@@ -146,6 +131,42 @@ class UserController extends Controller
             $array['error'] = 'Arquivo não enviado!';
             return $array;
         }
+        return $array;
+    }
+
+    public function read($id = false)
+    {
+        $array = ['error' => ''];
+
+        if ($id) {
+            $info = User::find($id);
+            if (!$info) {
+                $array['error'] = "Usuário inexistente!";
+                return $array;
+            }
+        } else {
+            $info = $this->loggedUser;
+        }
+
+        $info['avatar'] = url('/media/avatars/' . $info['avatar']);
+        $info['cover'] = url('/media/covers/' . $info['cover']);
+
+        $info['me'] = $info['id'] == $this->loggedUser['id'] ? true : false;
+
+        $dateFrom = new \DateTime($info['birthdate']);
+        $dateTo = new \DateTime('today');
+        $info['age'] = $dateFrom->diff($dateTo)->y;
+        $info['followers_count'] = UserRelation::where('user_to', $info['id'])->count();
+        $info['following_count'] = UserRelation::where('user_from', $info['id'])->count();
+        $info['posts_count'] = Post::where('id_user', $info['id'])
+            ->where('type', 'photo')->count();
+
+        //sigo o outro usuario?
+        $hasRelation = UserRelation::where('user_from', $this->loggedUser['id'])
+            ->where('user_to', $info['id'])->count();
+        $info['isFollowing'] = $hasRelation > 0 ? true : false;
+
+        $array['data'] = $info;
         return $array;
     }
 }
