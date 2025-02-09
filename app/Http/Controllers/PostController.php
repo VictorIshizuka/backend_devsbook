@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Post;
+use App\Models\PostLike;
 
 class PostController extends Controller
 {
@@ -10,7 +13,36 @@ class PostController extends Controller
     public function __construct()
     {
 
-        $this->middleware('auth:api');
-        $this->loggedUser = auth()->user();
+        // $this->middleware('auth:api');
+        $this->loggedUser = Auth::user();
+    }
+
+    public function like($id)
+    {
+
+        $array = ['error' => ''];
+        $post = Post::find($id);
+        if ($post) {
+            $isLiked = PostLike::where('id_post', $id)->where('id_user', $this->loggedUser['id'])->count();
+
+            if ($isLiked > 0) {
+                PostLike::where('id_post', $id)->where('id_user', $this->loggedUser['id'])->delete();
+                $array['isLiked'] = false;
+                // dd($isLiked );
+            } else {
+                $like = new PostLike();
+                $like->id_post = $id;
+                $like->id_user = $this->loggedUser['id'];
+                $like->created_at = date('Y-m-d H:i:s');
+                $like->save();
+                $array['isLiked'] = true;
+            }
+            $likeCount = PostLike::where('id_post', $id)->count();
+            $array['likeCount'] = $likeCount;
+        } else {
+            $array['error'] = "Post inexistente!";
+            return $array;
+        }
+        return      $array;
     }
 }
