@@ -13,6 +13,14 @@ use Intervention\Image\Laravel\Facades\Image;
 
 class FeedController extends Controller
 {
+
+    private $loggedUser;
+
+    public function __construct()
+    {
+        $this->loggedUser = Auth::user();
+    }
+
     public function create(Request $r)
     {
         $array = ['error' => ''];
@@ -56,12 +64,14 @@ class FeedController extends Controller
                     return $array;
             }
 
-            $newPost = new Post();
-            $newPost->id_user = Auth::user()->id;
-            $newPost->type = $type;
-            $newPost->created_at =  date('Y-m-d H-i-s');
-            $newPost->body = $body;
-            $newPost->save();
+            if ($body) {
+                $newPost = new Post();
+                $newPost->id_user = $this->loggedUser['id'];
+                $newPost->type = $type;
+                $newPost->created_at =  date('Y-m-d H-i-s');
+                $newPost->body = $body;
+                $newPost->save();
+            }
         } else {
             $array['error'] = "Dados não enviados.";
         }
@@ -72,30 +82,35 @@ class FeedController extends Controller
     public function read(Request $r)
     {
         $array = ['error' => ''];
+        $users = [];
         $page = intval($r->input('page'));
         $perPage = 2;
 
-        $users = [];
-        $userList = UserRelation::where('user_from', Auth::user()->id);
+        // dd($r->query());
+        //usuarios que eu sigo
+        $userList = UserRelation::where('user_from', $this->loggedUser['id'])->get();
         foreach ($userList as $userItem) {
             $users[] = $userItem['user_to'];
         }
-        $users[] = Auth::user()->id;
+
+        $users[] = $this->loggedUser['id'];
+        //pegar posts apeça data
         $postList = Post::whereIn('id_user', $users)
             ->orderBy('created_at', 'desc')
-            ->offset($page * $perPage)
+            ->offset(($page- 1) * $perPage)
             ->limit($perPage)->get();
 
-        $array['posts'] = [];
         $total = Post::whereIn('id_user', $users)->count();
         $pageCount = ceil($total / $perPage);
 
-        $posts = $this->_postListToObject($postList, Auth::user()->id);
 
+        $posts = $this->_postListToObject($postList, $this->loggedUser['id']);
+        // dd( $posts);
+
+        $array['posts'] = [];
         $array['posts'] = $posts;
         $array['pageCount'] = $pageCount;
         $array['currentPage'] = $page;
-
 
         return $array;
     }
@@ -107,7 +122,7 @@ class FeedController extends Controller
             $id = Auth::user()->id;
         }
         $page = intval($r->input('page'));
-        $perPage = 2;
+        $perPage = 1;
 
         $postList = Post::where('id_user', $id)
             ->orderBy('created_at', 'desc')
@@ -128,8 +143,8 @@ class FeedController extends Controller
     }
     private function _postListToObject($postList, $loggedUserId)
     {
-
         foreach ($postList as $postKey => $postItem) {
+            // dd($postList->toArray(), $postKey,  $postItem);
             if ($postItem['id_user'] == $loggedUserId) {
                 $postList[$postKey]['mine'] = true;
             } else {
@@ -140,11 +155,11 @@ class FeedController extends Controller
             $userInfo['avatar'] = url('/media/avatars/' . $userInfo['avatar']);
             $userInfo['cover'] = url('/media/covers/' . $userInfo['cover']);
             $postList[$postKey]['user'] = $userInfo;
-
+            //qtd likes
             $likes = PostLike::where('id_post', $postItem['id'])->count();
             $postList[$postKey]['likeCount'] = $likes;
 
-            $isLiked = PostLike::where(column: 'id_user', operator: $postItem['id'])
+            $isLiked = PostLike::where('id_user',  $postItem['id'])
                 ->where('id_user',  $loggedUserId)->count();
             $postList[$postKey]['liked'] = $isLiked > 0;
 

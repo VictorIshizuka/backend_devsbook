@@ -10,6 +10,12 @@ use Intervention\Image\Laravel\Facades\Image;
 
 class UserController extends Controller
 {
+    private $loggedUser;
+
+    public function __construct()
+    {
+        $this->loggedUser = Auth::user();
+    }
 
     public function update(Request $r)
     {
@@ -75,13 +81,14 @@ class UserController extends Controller
         $array = ['error' => ''];
         $allowedTypes = ['image/jpg', 'image/jpeg', 'image/png'];
         $image = $r->file('avatar');
+
         if ($image) {
             if (in_array($image->getClientMimeType(), $allowedTypes)) {
                 $filename = md5(time() . rand(0, 9999)) . '.jpg';
                 $destPath = public_path(('/media/avatars'));
                 $img = Image::read($image->path())->cover(200, 200)->save($destPath . '/' . $filename);
 
-                $user = User::find(Auth::user()->id);
+                $user = User::find( $this->loggedUser['id']);
                 $user->avatar = $filename;
                 $user->save();
 
@@ -126,7 +133,7 @@ class UserController extends Controller
                 $destPath = public_path(('/media/covers'));
                 $img = Image::read($image->path())->cover(850, 310)->save($destPath . '/' . $filename);
 
-                $user = User::find(Auth::user()->id);
+                $user = User::find( $this->loggedUser['id']);
                 $user->cover = $filename;
                 $user->save();
 
