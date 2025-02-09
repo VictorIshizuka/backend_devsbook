@@ -169,4 +169,64 @@ class UserController extends Controller
         $array['data'] = $info;
         return $array;
     }
+
+    public function follow($id)
+    {
+        $array = ['error' => ''];
+
+        if ($id == $this->loggedUser['id']) {
+            $array['error'] = 'Nao pode seguir voce mesmo';
+            return $array;
+        }
+
+        $userExistis = User::find($id);
+
+        if (!$userExistis) {
+            $array['error'] = 'Usuário inexistente!';
+            return $array;
+        }
+
+        $relation = UserRelation::where('user_from', $this->loggedUser['id'])
+            ->where('user_to', $userExistis['id'])->first();
+        if ($relation) {
+            $relation->delete();
+        } else {
+            $newRelation = new UserRelation();
+            $newRelation->user_from = $this->loggedUser['id'];
+            $newRelation->user_to = $userExistis['id'];
+            $newRelation->save();
+        }
+    }
+
+    public function followers($id)
+    {
+        $array = ['error' => ''];
+        $info = User::find($id);
+        if (!$info) {
+            $array['error'] = 'Usuário inexistente!';
+            return $array;
+        }
+        $followers = UserRelation::where('user_to', $info['id'])->get();
+        $following = UserRelation::where('user_from', $info['id'])->get();
+        $array['followers'] = [];
+        $array['following'] = [];
+        foreach ($followers as $item) {
+            $user = User::find($item['user_from']);
+            $array['followers'][] = [
+                'avatar' => url('/media/avatars/' . $user['avatar']),
+                'name' => $user['name'],
+                'id' => $user['id'],
+            ];
+        }
+        foreach ($following as $item) {
+            $user = User::find($item['user_from']);
+            $array['following'][] = [
+                'avatar' => url('/media/avatars/' . $user['avatar']),
+                'name' => $user['name'],
+                'id' => $user['id'],
+            ];
+        }
+        return $array;
+    }
+
 }

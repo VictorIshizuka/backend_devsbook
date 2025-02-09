@@ -4,6 +4,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,12 +33,18 @@ Route::get('/feed', [FeedController::class, 'read'])->name('feed.read');
 Route::get('/user/feed', [FeedController::class, 'userFeed'])->name('feed.userFeed');
 Route::get('/user/{id}/feed', [FeedController::class, 'userFeed'])->name('feed.userFeed');
 
+Route::post('user/{id}/follow',[UserController::class, 'follow'])->name('user.follow')->middleware('auth:api');
+Route::get('user/{id}/followers',[UserController::class, 'followers'])->name('user.followers');
+Route::get('user/{id}/photos',[FeedController::class, 'photos'])->name('user.photos');
+
 Route::get('/user', [UserController::class, 'read'])->name('user.read');
 Route::get('/user/{id}', [UserController::class, 'read'])->name('user.read');
 
 Route::post('/feed', [FeedController::class, 'create'])->name('feed.create')->middleware('auth:api');
 
-// Route::post('/post/{id}/like', [PostController, 'like'])->name('post.like');
-// Route::post('/post/{id}/comment', [PostController, 'comment'])->name('post.comment');
+Route::post('/post/{id}/like', [PostController::class, 'like'])->name('post.like');
+Route::post('/post/{id}/comment', [PostController::class, 'comment'])->name('post.comment');
 
-// Route::get('/search', [SearchController, 'search'])->name('search');
+Route::get('/search', [SearchController::class, 'search'])->name('search');
+
+

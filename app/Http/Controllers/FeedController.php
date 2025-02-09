@@ -97,7 +97,7 @@ class FeedController extends Controller
         //pegar posts apeça data
         $postList = Post::whereIn('id_user', $users)
             ->orderBy('created_at', 'desc')
-            ->offset(($page- 1) * $perPage)
+            ->offset(($page - 1) * $perPage)
             ->limit($perPage)->get();
 
         $total = Post::whereIn('id_user', $users)->count();
@@ -119,7 +119,7 @@ class FeedController extends Controller
     {
         $array = ['error' => ''];
         if ($id == false) {
-            $id =$this->loggedUser['id'];
+            $id = $this->loggedUser['id'];
         }
         $page = intval($r->input('page'));
         $perPage = 2;
@@ -127,7 +127,7 @@ class FeedController extends Controller
         //pegar post do usuario por data
         $postList = Post::where('id_user', $id)
             ->orderBy('created_at', 'desc')
-            ->offset(($page- 1) * $perPage)
+            ->offset(($page - 1) * $perPage)
             ->limit($perPage)->get();
 
 
@@ -175,5 +175,37 @@ class FeedController extends Controller
         }
         //erro ao listar verificar
         return $postList;
+    }
+
+    public function photos(Request $r, $id)
+    {
+
+        $array = ['error' => ''];
+        if ($id == false) {
+            $id = $this->loggedUser['id'];
+        }
+        $page = intval($r->input('page'));
+        $perPage = 2;
+
+        $postList = Post::where('id_user', $id)
+            ->orderBy('created_at', 'desc')->where('type', 'photo')
+            ->offset(($page - 1) * $perPage)
+            ->limit($perPage)->get();
+
+
+        $total = Post::where('id_user', $id)->where('type', 'photo')->count();
+        $pageCount = ceil($total / $perPage);
+
+        $posts = $this->_postListToObject($postList, Auth::user()->id);
+
+        foreach($posts as $key => $post){
+            $posts[$key]['body'] = url('/media/posts/' . $posts[$key]['body']);
+        }
+
+        $array['posts'] = $posts;
+        $array['pageCount'] = $pageCount;
+        $array['currentPage'] = $page;
+
+        return $array;
     }
 }
